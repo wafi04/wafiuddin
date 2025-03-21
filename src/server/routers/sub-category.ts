@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { publicProcedure, router } from '../trpc';
-import { Prisma } from '@prisma/client';
 import { FormSubCategory } from '@/types/schema/categories';
 import { TRPCError } from '@trpc/server';
+import { Prisma } from '@prisma/client';
 
 export const subCategory = router({
   getCategories: publicProcedure.query(async ({ ctx }) => {

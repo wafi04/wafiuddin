@@ -9,12 +9,13 @@ import {
   SheetTrigger,
 } from '../ui/sheet';
 import Link from 'next/link';
-import { ButtonProfile } from '../ui/button-profile';
 import { dataNavAdmin } from '@/data/data-nav-admin';
-import { AuthDropdown } from '../ui/auth-dropodown';
 import { User } from '@/types/schema/user';
-import { NavItem } from '../ui/nav-item';
+
 import { NavItems } from '@/types/schema/navbar';
+import { ButtonProfile } from '../ui/button-profile';
+import { NavItem } from '../../../../vazzuniverse/src/components/ui/nav-item copy';
+import { AuthDropdown } from '../ui/auth-dropodown';
 
 interface MobileHeaderProps {
   user: User;

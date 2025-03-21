@@ -76,7 +76,8 @@ model Categories {
   createdAt     DateTime? @map("created_at")
   updatedAt     DateTime? @map("updated_at")
   bannerLayanan String    @map("bannerlayanan")
-  layanan       Layanan[]
+  vouchers     VoucherCategory[]
+
 
   @@map("kategoris")
 }
@@ -101,13 +102,11 @@ model Layanan {
   bannerFlashSale    String?   @db.Text @map("banner_flash_sale")
   expiredFlashSale   DateTime? @db.Date @map("expired_flash_sale")
   catatan            String    @db.LongText @map("catatan")
-  status             String    @map("status")
+  status             Boolean    @map("status")
   provider           String    @map("provider")
   productLogo        String?   @map("product_logo")
   createdAt          DateTime? @map("created_at")
   updatedAt          DateTime? @map("updated_at")
-  kategori           Categories  @relation(fields: [kategoriId], references: [id])
-  subCategory        SubCategory @relation(fields: [subCategoryId], references: [id])
 
   @@map("layanans")
 }
@@ -135,45 +134,48 @@ model Ovo {
 
   @@map("ovos")
 }
-
 model Pembayaran {
   id             Int       @id @default(autoincrement()) @map("id")
-  orderId       String    @map("order_id")
-  harga         String    @map("harga")
-  noPembayaran  String?   @db.Text @map("no_pembayaran")
-  noPembeli     Int       @map("no_pembeli")
-  status        String    @map("status")
-  metode        String    @map("metode")
-  reference     String?   @map("reference")
-  createdAt     DateTime? @map("created_at")
-  updatedAt     DateTime? @map("updated_at")
+  orderId        String    @unique @map("order_id")
+  harga          String    @map("harga")
+  noPembayaran   String?   @db.Text @map("no_pembayaran")
+  noPembeli      Int       @map("no_pembeli")
+  status         String    @map("status")
+  metode         String    @map("metode")
+  reference      String?   @map("reference")
+  createdAt      DateTime? @map("created_at")
+  updatedAt      DateTime? @map("updated_at")
+  
+  pembelian      Pembelian? @relation("PembayaranToPembelian")
 
   @@map("pembayarans")
 }
 
 model Pembelian {
   id                    Int       @id @default(autoincrement()) @map("id")
-  orderId              String    @map("order_id")
-  username            String?   @map("username")
-  userId              String?   @map("user_id")
-  zone                String?   @map("zone")
-  nickname            String?   @map("nickname")
-  emailVilog          String?   @db.Text @map("email_vilog")
-  passwordVilog       String?   @db.Text @map("password_vilog")
-  loginviaVilog       String?   @db.Text @map("loginvia_vilog")
-  layanan             String    @map("layanan")
-  harga               Int       @map("harga")
-  profit              Int       @map("profit")
-  providerOrderId     String?   @map("provider_order_id")
-  status              String    @map("status")
-  log                 String?   @db.VarChar(1000) @map("log")
-  sn                  String?   @map("sn")
-  tipeTransaksi       String    @default("game") @map("tipe_transaksi")
-  isDigi             Boolean @map("is_digi")
-  refId               String?   @map("ref_id")
-  successReportSended Boolean   @map("success_report_sended")
-  createdAt           DateTime? @map("created_at")
-  updatedAt           DateTime? @map("updated_at")
+  orderId               String    @unique @map("order_id")
+  username              String?   @map("username")
+  userId                String?   @map("user_id")
+  zone                  String?   @map("zone")
+  nickname              String?   @map("nickname")
+  emailVilog            String?   @db.Text @map("email_vilog")
+  passwordVilog         String?   @db.Text @map("password_vilog")
+  loginviaVilog         String?   @db.Text @map("loginvia_vilog")
+  layanan               String    @map("layanan")
+  harga                 Int       @map("harga")
+  profit                Int       @map("profit")
+  providerOrderId       String?   @map("provider_order_id")
+  status                String    @map("status")
+  log                   String?   @db.VarChar(1000) @map("log")
+  sn                    String?   @map("sn")
+  tipeTransaksi         String    @default("game") @map("tipe_transaksi")
+  isDigi                Boolean   @map("is_digi")
+  refId                 String?   @map("ref_id")
+  successReportSended   Boolean   @map("success_report_sended")
+  createdAt             DateTime? @map("created_at")
+  updatedAt             DateTime? @map("updated_at")
+  
+  pembayaran            Pembayaran? @relation("PembayaranToPembelian", fields: [orderId], references: [orderId])
 
   @@map("pembelians")
 }
@@ -254,7 +256,6 @@ model SubCategory {
   active       Boolean    @map("active")
   createdAt    DateTime? @map("created_at")
   updatedAt    DateTime? @map("updated_at")
-  layanan      Layanan[]
 
   @@map("sub_categories")
 }
@@ -269,7 +270,7 @@ model Users {
   role           String    @map("role")
   otp            String?   @map("otp")
   apiKey         String?   @map("api_key")
-  createdAt      DateTime? @map("created_at")
+  createdAt      DateTime? @map("created_at")   @default(now())
   updatedAt      DateTime? @map("updated_at")
   lastPaymentAt  DateTime? @map("last_payment_at")
 
@@ -326,4 +327,39 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model Voucher {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique
+  discountType   String    
+  discountValue  Float     
+  maxDiscount    Float?    
+  minPurchase    Float?    
+  usageLimit     Int?      
+  usageCount     Int       @default(0)
+  isForAllCategories Boolean @default(false) @map("is_for_all_categories")
+  isActive       Boolean   @default(true) @map("is_active")
+  startDate      DateTime  @default(now()) @map("start_date")
+  expiryDate     DateTime  @map("expiry_date")
+  description    String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  
+  categories     VoucherCategory[]
+
+  @@map("vouchers")
+}
+
+model VoucherCategory {
+  id          Int        @id @default(autoincrement())
+  voucherId   Int        @map("voucher_id")
+  categoryId  Int        @map("category_id")
+  
+  voucher     Voucher    @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  category    Categories @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@unique([voucherId, categoryId])
+  @@map("voucher_categories")
 }

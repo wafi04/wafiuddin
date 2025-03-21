@@ -64,7 +64,7 @@ export const member = router({
         data: {
           ...input,
           role: 'Member',
-          balance: 0 // Adding default balance
+          balance: 0 
         }
       })
       

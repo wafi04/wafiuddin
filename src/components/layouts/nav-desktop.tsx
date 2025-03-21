@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { ButtonProfile } from '../ui/button-profile';
-import { AuthDropdown } from '../ui/auth-dropodown';
-import { NavItem } from '../ui/nav-item';
+
 import type { NavItems } from '@/types/schema/navbar';
 import type { User } from '@/types/schema/user';
+import { ButtonProfile } from '../ui/button-profile';
+import { NavItem } from '../../../../vazzuniverse/src/components/ui/nav-item copy';
+import { AuthDropdown } from '../ui/auth-dropodown';
 
 interface DesktopSidebarProps {
   navItems: NavItems[];

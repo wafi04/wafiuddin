@@ -30,7 +30,7 @@ export const Layanans = router({
 
         // Add status filter
         if (input.status) {
-          where.status = input.status === 'active' ? 'true' : 'false';
+          where.status = input.status === 'active' ? true : false;
         }
 
         // Execute query with filters
@@ -84,7 +84,7 @@ export const Layanans = router({
         subCategoryId: z.number().optional(),
         providerId: z.string().optional(),
         search: z.string().optional(),
-        status: z.boolean().optional(),
+        status: z.string().optional(),
         isFlashSale: z.boolean().optional(),
         page: z.number(),
         perPage: z.number(),
@@ -120,7 +120,7 @@ export const Layanans = router({
 
         // Add status filter
         if (input.status !== undefined) {
-          where.status = input.status ? 'true' : 'false';
+          where.status = input.status ? true : false;
         }
 
         // Add flash sale filter
@@ -237,8 +237,9 @@ export const Layanans = router({
         };
       } catch (error) {
         return {
-          error,
-          status: false,
+         status : false,
+         layanan : [],
+         subCategories : []
         };
       }
     }),
@@ -293,7 +294,7 @@ export const Layanans = router({
           },
           data: {
             ...input,
-            status: input.status ? 'true' : 'false',
+            status: input.status ? true : false,
           },
         });
 

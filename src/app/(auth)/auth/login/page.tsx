@@ -47,7 +47,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/');
+      window.location.href = '/'
     } catch (error) {
       setLoginError('An unexpected error occurred');
       console.error('Login error:', error);

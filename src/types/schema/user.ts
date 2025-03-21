@@ -5,7 +5,7 @@ export type User = {
   role: string;
   whatsapp: string | null;
   balance: string;
-  api_key: string | null;
+  apiKey: string | null;
   otp: string | null;
   createdAt: Date | null
   updatedAt: Date | null

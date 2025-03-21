@@ -1,10 +1,10 @@
 import { publicProcedure, router } from '../trpc';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
-import { getProfile } from '@/app/(auth)/auth/components/server';
+import { findUserById, getProfile } from '@/app/(auth)/auth/components/server';
 import { Digiflazz } from '@/lib/digiflazz';
 import { TRANSACTION_FLOW } from '@/types/transaction';
+import { Prisma } from '@prisma/client';
 
 export const order = router({
   createManual: publicProcedure
@@ -114,5 +114,102 @@ export const order = router({
         };
       }
     }),
-
+    findByUser: publicProcedure
+    .input(z.object({
+      page: z.number(),
+      perPage: z.number(),
+      search: z.string()
+    }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const session = await getProfile()
+        const userId = session?.session.id;
+        
+        if (!userId) {
+          return {
+            status: false,
+            message: "Unauthorized: User not logged in",
+            statusCode: 401,
+            data: [],
+            pagination : {}
+          };
+        }
+        
+        const user = await findUserById(userId);
+        
+        if (!user) {
+          return {
+            status: false,
+            message: "User not found",
+            statusCode: 401,
+            data: [],
+            pagination : {}
+          };
+        }
+        
+        // Build the where clause
+        const where: Prisma.PembelianWhereInput = {
+          username: user.username
+        };
+        
+        // Add search functionality based on schema fields
+        if (input.search && input.search.trim() !== '') {
+          where.OR = [
+            { layanan: { contains: input.search } },
+            { orderId: { contains: input.search } },
+            { nickname: { contains: input.search } },
+            { status: { contains: input.search } },
+            { tipeTransaksi: { contains: input.search } }
+          ];
+        }
+        
+        // Calculate pagination
+        const skip = (input.page - 1) * input.perPage;
+        
+        // Get total count for pagination info
+        const totalCount = await ctx.prisma.pembelian.count({
+          where
+        });
+        
+        // Get transactions with pagination
+        const transactions = await ctx.prisma.pembelian.findMany({
+          where,
+          skip,
+          take: input.perPage,
+          orderBy: {
+            createdAt: 'desc'
+          },
+          include: {
+            pembayaran: true
+          }
+        });
+        
+        return {
+          status: true,
+          message: "Transactions retrieved successfully",
+          statusCode: 200,
+          data: transactions,
+          pagination: {
+            total: totalCount,
+            page: input.page,
+            perPage: input.perPage,
+            totalPages: Math.ceil(totalCount / input.perPage)
+          }
+        };
+      } catch (error) {
+        console.error("Error in findByUser:", error);
+        return {
+          status: false,
+          message: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          statusCode: 500,
+          data: [],
+          pagination: {
+            total: 0,
+            page: input.page,
+            perPage: input.perPage,
+            totalPages: 0
+          }
+        };
+      }
+    })
 });
