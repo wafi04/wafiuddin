@@ -53,7 +53,7 @@ export default function DialogSubCategory({
       active: false,
       code: '',
       name: '',
-      categoriesId: undefined,
+      categoryId: undefined,
     },
   });
 
@@ -144,9 +144,9 @@ export default function DialogSubCategory({
             <Label htmlFor="category">Category</Label>
             <Select
               onValueChange={(value) =>
-                form.setValue('categoriesId', Number(value))
+                form.setValue('categoryId', Number(value))
               }
-              defaultValue={initialData?.categoriesId.toString()}
+              defaultValue={initialData?.categoryId.toString()}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
@@ -154,14 +154,14 @@ export default function DialogSubCategory({
               <SelectContent className="max-h-40">
                 {categories?.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
+                    {category.nama}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {form.formState.errors.categoriesId && (
+            {form.formState.errors.categoryId && (
               <p className="text-sm text-red-500">
-                {form.formState.errors.categoriesId.message}
+                {form.formState.errors.categoryId.message}
               </p>
             )}
           </div>
@@ -217,7 +217,7 @@ export function DialogSubDeleteCategory({
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { mutate, isPending } = trpc.sub.delete.useMutation({
+  const { mutate, isLoading : isPending } = trpc.sub.delete.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [['sub', 'getSubAll']] });
       toast.success('Sub category created successfully');

@@ -63,7 +63,6 @@ export function DashboardProductCategory() {
     },
     {
       retry: 1,
-      gcTime: 5 * 60,
       staleTime: 5 * 60,
     }
   );
@@ -131,12 +130,12 @@ export function DashboardProductCategory() {
                 {categories.map((category) => (
                   <TableRow key={category.id}>
                     <TableCell className="font-medium">
-                      {category.name}
+                      {category.nama}
                     </TableCell>
-                    <TableCell>{category.subName}</TableCell>
+                    <TableCell>{category.subNama}</TableCell>
                     <TableCell>{category.brand}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{category.type}</Badge>
+                      <Badge variant="outline">{category.tipe}</Badge>
                     </TableCell>
                     <TableCell>{getStatusBadge(category.status)}</TableCell>
                     <TableCell className="text-right">

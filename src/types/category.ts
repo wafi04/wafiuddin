@@ -23,7 +23,7 @@ export type SubCategories = {
   createdAt: string;
   updatedAt: string;
   code: string;
-  categoriesId: number;
+  categoryId: number;
   active: boolean;
 };
 
