@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../trpc";
 import { Prisma } from "@prisma/client";
-import { findUserById, findUserByUsername } from "@/app/(auth)/auth/components/server";
+import { findUserById, findUserByUsername, getProfile } from "@/app/(auth)/auth/components/server";
 
 export const member = router({
   findAll: publicProcedure.input(
@@ -44,6 +44,42 @@ export const member = router({
       };
     } catch (error) {
       throw new Error(`Failed to fetch members: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }),
+  findMe : publicProcedure.query(async({ctx}) => {
+    try {
+     const session = await getProfile()
+
+     if(!session){
+      return  {
+        status : false,
+        message : "Message retreived successfully"
+      }
+     }
+     const profile  = await ctx.prisma.users.findUnique({
+      where : {
+        username : session.session?.username
+      },
+      select : {
+        role : true,
+        id : true,
+        balance : true,
+        name : true,
+        username : true
+      }
+     }) 
+
+     if(!profile){
+      return  {
+        status : false,
+        message : "Message retreived successfully"
+      }
+     }
+
+     return profile
+    } catch (error) {
+      throw new Error(`Failed to fetch members: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
     }
   }),
   add: publicProcedure.input(
@@ -119,4 +155,6 @@ export const member = router({
         }
     }
   }),
+
+
 });

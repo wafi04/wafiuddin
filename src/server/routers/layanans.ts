@@ -225,6 +225,8 @@ export const Layanans = router({
             providerId: true,
             subCategoryId: true,
             harga: true,
+            hargaFlashSale : true,
+            isFlashSale : true,
             id: true,
           },
           orderBy: {

@@ -9,7 +9,7 @@ export async function GET() {
     // Get credentials
     const username = process.env.DIGI_USERNAME;
     const apiKey = process.env.DIGI_API_KEY;
-    const settingweb =  await prisma.settingWeb.findFirst()
+    const settingweb =  await prisma.websiteConfig.findFirst()
 
     if (!username || !apiKey ) {
       console.error('Missing Digiflazz credentials');
@@ -27,10 +27,10 @@ export async function GET() {
     let rawResponse;
     try {
       rawResponse = await digiflazz.checkPrice();
-    } catch (e) {
+    } catch (e ) {
       console.error('Error fetching from Digiflazz API:', e);
       return NextResponse.json(
-        { error: 'Failed to fetch price list: ' + e.message },
+        { error: 'Failed to fetch price list: ' + (e instanceof Error ?  e.message : e) },
         { status: 500 }
       );
     }

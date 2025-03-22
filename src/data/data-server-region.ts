@@ -245,7 +245,6 @@ export const getServerData = (code: string) => {
     case 'Tarisland':
     case 'tarisland':
       return dataTarisland;
-    // Payment services and telecom providers return empty default
     case 'telkomsel':
     case 'indosat':
     case 'axis':

@@ -15,8 +15,7 @@ export type FILTER = "ALL" | "PAYMENT" | "DEPOSIT" | "Top Up"
 export default function DashboardAdminPage() {
   const { data } = trpc.transaction.useQuery()
   const [selectedTab, setSelectedTab] = useState("overview")
-
-  console.log(data)
+  console.log(data?.revenue)
   
   // If data is undefined, display loading state
   if (!data) {
@@ -134,7 +133,7 @@ export default function DashboardAdminPage() {
               </CardHeader>
               <CardContent>
                 <TransactionStatusChart data={{
-                  successful: data.statusCounts.successful,
+                  successfully: data.statusCounts.successful,
                   pending: data.statusCounts.pending,
                   failed: data.statusCounts.failed
                 }} />

@@ -17,7 +17,7 @@ export function PaymentMethodUsingDeposit({
 }: PaymentMethodUsingDepositProps) {
   
   const { data: userData, isLoading } = trpc.member.findMe.useQuery();
-
+  console.log(userData)
 
   if (isLoading) {
     return (
@@ -30,7 +30,7 @@ export function PaymentMethodUsingDeposit({
     );
   }
   
-  const balance = userData?.balance  ?? 0 as number  
+  const balance =  userData?.balance ?? 0 as number  
   const isDisabled = amount > balance;
   
   const handleSelectCoin = () => {

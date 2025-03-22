@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const FormCategory = z.object({
-  name: z.string().min(1, { message: 'Nama kategori wajib diisi' }),
-  subName: z.string().min(1, { message: 'Sub nama wajib diisi' }),
+  nama: z.string().min(1, { message: 'Nama kategori wajib diisi' }),
+  subNama: z.string().min(1, { message: 'Sub nama wajib diisi' }),
   brand: z.string().min(1, { message: 'Brand wajib diisi' }),
   kode: z.string().optional(),
   serverId: z.coerce.number().int().min(0),

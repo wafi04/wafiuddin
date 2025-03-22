@@ -7,13 +7,18 @@ import { z } from 'zod';
 export const ConfigWeb = router({
   upsert: publicProcedure.input(configWeb).mutation(async ({ ctx, input }) => {
     try {
-      console.log(input);
+      console.log("WhatsApp fields di server:", {
+        waPending: input.waPending,
+        waPaid: input.waPaid,
+        waProcess: input.waProcess,
+        waSuccess: input.waSuccess
+      });
       // Check if a record exists
-      const existingConfig = await ctx.prisma.settingWeb.findFirst();
-
+      const existingConfig = await ctx.prisma.websiteConfig.findFirst();
+      console.log(input)
       if (existingConfig) {
         // If record exists, update it
-        return ctx.prisma.settingWeb.update({
+        return ctx.prisma.websiteConfig.update({
           where: {
             id: existingConfig.id,
           },
@@ -23,7 +28,7 @@ export const ConfigWeb = router({
         });
       } else {
         // If no record exists, create a new one
-        return ctx.prisma.settingWeb.create({
+        return ctx.prisma.websiteConfig.create({
           data: {
             ...input,
           },
@@ -40,7 +45,7 @@ export const ConfigWeb = router({
   // Get the current config
   getConfig: publicProcedure.query(async ({ ctx }) => {
     try {
-      const config = await ctx.prisma.settingWeb.findFirst();
+      const config = await ctx.prisma.websiteConfig.findFirst();
       if (!config) {
         return null; // Return null if no config exists yet
       }

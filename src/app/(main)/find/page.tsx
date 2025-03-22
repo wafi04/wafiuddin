@@ -4,7 +4,7 @@ export default function  Page(){
     return (
             // <ClientPage />
 
-            <div></div>
+           <ClientPage />
         
     )
 }

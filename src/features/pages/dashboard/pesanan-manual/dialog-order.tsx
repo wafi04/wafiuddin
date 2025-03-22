@@ -27,6 +27,7 @@ import { Loader2 } from 'lucide-react';
 import { ReactNode, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { PlaceholderContent } from '../../order/placeholder/content';
+import { getServerData } from '@/data/data-server-region';
 
 interface DialogOrderManualProps {
   data?: Category[];
@@ -49,7 +50,7 @@ export function DialogOrderManual({
   const [isFormValid, setIsFormValid] = useState(false);
   const [placeholder1, setPlaceholder1] = useState('');
   const [placeholder2, setPlaceholder2] = useState('');
-  const { mutate, isPending } = trpc.order.createManual.useMutation({
+  const { mutate, isLoading : isPending } = trpc.order.createManual.useMutation({
     onSuccess: () => {
       toast.success('Order created successfully');
       resetForm();
@@ -66,6 +67,8 @@ export function DialogOrderManual({
       { category: selectedCategoryId },
       { enabled: !!selectedCategoryId }
     );
+  
+    const serverData =  getServerData(selectedCategory?.kode as string)
 
   // Find selected category object when ID changes
   useEffect(() => {
@@ -139,7 +142,7 @@ export function DialogOrderManual({
                     <SelectLabel>Categories</SelectLabel>
                     {data?.map((category) => (
                       <SelectItem key={category.id} value={category.kode || ''}>
-                        {category.name}
+                        {category.nama}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -197,6 +200,7 @@ export function DialogOrderManual({
                 category={selectedCategory}
                 userId={placeholder1}
                 serverId={placeholder2}
+                serverData={serverData}
                 onChangeUserId={setPlaceholder1}
                 onChangeServerId={setPlaceholder2}
               />

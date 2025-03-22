@@ -10,7 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import {
   CalendarIcon,
   Info,
@@ -37,10 +36,10 @@ interface VoucherFormProps {
 
 export function VoucherForm({ initialData, onSuccess }: VoucherFormProps) {
   const { data: categories } = trpc.main.getCategories.useQuery({
-    fields: ['id', 'name'],
+    fields: ['id', 'nama'],
   });
   const queryClient = useQueryClient();
-  const { mutate, isPending } = trpc.voucher.create.useMutation({
+  const { mutate, isLoading : isPending } = trpc.voucher.create.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voucher', 'getAll'] });
       toast.success('created voucher successfully');
@@ -51,7 +50,7 @@ export function VoucherForm({ initialData, onSuccess }: VoucherFormProps) {
       toast.error('failed to create voucher');
     },
   });
-  const { mutate: update, isPending: updatePending } =
+  const { mutate: update, isLoading: updatePending } =
     trpc.voucher.update.useMutation();
 
   const defaultStartDate = new Date();
@@ -360,27 +359,48 @@ export function VoucherForm({ initialData, onSuccess }: VoucherFormProps) {
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={
-                        watch('startDate') instanceof Date
-                          ? watch('startDate')
-                          : new Date(watch('startDate') || defaultStartDate)
-                      }
-                      onSelect={(date) => {
-                        if (date) {
-                          setValue('startDate', new Date(date));
-                        }
-                      }}
-                      disabled={(date) => {
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        return date < today;
-                      }}
-                      initialFocus
-                    />
-                  </PopoverContent>
+                  <PopoverContent className="w-auto p-4" align="start">
+  <div className="space-y-2">
+    <label htmlFor="date-picker" className="text-sm font-medium">
+      Select Date
+    </label>
+    <input
+  id="date-picker"
+  type="date"
+  className="w-full rounded-md border border-input bg-background px-3 py-2"
+  value={(() => {
+    try {
+      const dateValue = watch('startDate');
+      if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+        return dateValue.toISOString().split('T')[0];
+      } else {
+        const fallbackDate = new Date(dateValue || defaultStartDate);
+        return !isNaN(fallbackDate.getTime()) 
+          ? fallbackDate.toISOString().split('T')[0] 
+          : new Date().toISOString().split('T')[0];
+      }
+    } catch (e) {
+      return new Date().toISOString().split('T')[0];
+    }
+  })()}
+  onChange={(e) => {
+    if (e.target.value) {
+      setValue('startDate', new Date(e.target.value));
+    }
+  }}
+  min={new Date().toISOString().split('T')[0]}
+/>
+    <div className="flex justify-end">
+      <button
+        type="button"
+        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
+        onClick={() => setValue('startDate', new Date())}
+      >
+        Today
+      </button>
+    </div>
+  </div>
+</PopoverContent>
                 </Popover>
                 {errors.startDate && (
                   <p className="text-sm font-medium text-destructive">
@@ -411,33 +431,94 @@ export function VoucherForm({ initialData, onSuccess }: VoucherFormProps) {
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={
-                        watch('expiryDate') instanceof Date
-                          ? watch('expiryDate')
-                          : new Date(watch('expiryDate') || defaultExpiryDate)
-                      }
-                      onSelect={(date) => {
-                        if (date) {
-                          setValue('expiryDate', new Date(date));
-                        }
-                      }}
-                      disabled={(date) => {
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-
-                        const startDate =
-                          watch('startDate') instanceof Date
-                            ? watch('startDate')
-                            : new Date(watch('startDate') || defaultStartDate);
-
-                        return date < today || date < startDate;
-                      }}
-                      initialFocus
-                    />
-                  </PopoverContent>
+                  <PopoverContent className="w-auto p-4" align="start">
+  <div className="space-y-2">
+    <label htmlFor="expiry-date-picker" className="text-sm font-medium">
+      Select Expiry Date
+    </label>
+    <input
+  id="expiry-date-picker"
+  type="date"
+  className="w-full rounded-md border border-input bg-background px-3 py-2"
+  value={(() => {
+    try {
+      const dateValue = watch('expiryDate');
+      if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+        return dateValue.toISOString().split('T')[0];
+      } else {
+        const fallbackDate = new Date(dateValue || defaultExpiryDate);
+        return !isNaN(fallbackDate.getTime()) 
+          ? fallbackDate.toISOString().split('T')[0] 
+          : new Date().toISOString().split('T')[0];
+      }
+    } catch (e) {
+      return new Date().toISOString().split('T')[0];
+    }
+  })()}
+  onChange={(e) => {
+    if (e.target.value) {
+      setValue('expiryDate', new Date(e.target.value));
+    }
+  }}
+  min={(() => {
+    try {
+      // Get the later of today or startDate
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const startDateValue = watch('startDate');
+      const startDate = startDateValue instanceof Date && !isNaN(startDateValue.getTime())
+        ? startDateValue
+        : new Date(startDateValue || defaultStartDate);
+      
+      if (isNaN(startDate.getTime())) {
+        return today.toISOString().split('T')[0];
+      }
+      
+      return startDate > today 
+        ? startDate.toISOString().split('T')[0] 
+        : today.toISOString().split('T')[0];
+    } catch (e) {
+      return new Date().toISOString().split('T')[0];
+    }
+  })()}
+/>
+    <div className="flex justify-end space-x-2">
+      <button
+        type="button"
+        className="rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground"
+        onClick={() => {
+          const startDate = watch('startDate') instanceof Date
+            ? watch('startDate')
+            : new Date(watch('startDate') || defaultStartDate);
+          
+          // Set to 7 days after start date
+          const newDate = new Date(startDate);
+          newDate.setDate(newDate.getDate() + 7);
+          setValue('expiryDate', newDate);
+        }}
+      >
+        +7 Days
+      </button>
+      <button
+        type="button"
+        className="rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground"
+        onClick={() => {
+          const startDate = watch('startDate') instanceof Date
+            ? watch('startDate')
+            : new Date(watch('startDate') || defaultStartDate);
+          
+          // Set to 30 days after start date
+          const newDate = new Date(startDate);
+          newDate.setDate(newDate.getDate() + 30);
+          setValue('expiryDate', newDate);
+        }}
+      >
+        +30 Days
+      </button>
+    </div>
+  </div>
+</PopoverContent>
                 </Popover>
                 {errors.expiryDate && (
                   <p className="text-sm font-medium text-destructive">
@@ -498,7 +579,7 @@ export function VoucherForm({ initialData, onSuccess }: VoucherFormProps) {
                 <MultiSelect
                   options={categories.data.map((cat) => ({
                     value: cat.id.toString(),
-                    label: cat.name,
+                    label: cat.nama,
                   }))}
                   selected={
                     watch('categoryIds')?.map((id) => id.toString()) || []

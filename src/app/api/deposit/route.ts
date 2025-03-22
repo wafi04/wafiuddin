@@ -4,10 +4,8 @@ import crypto, { randomUUID } from 'crypto';
 import { DUITKU_API_KEY, DUITKU_MERCHANT_CODE } from '@/constants';
 import { findUserById, getProfile } from '@/app/(auth)/auth/components/server';
 import { Duitku } from '../duitku/duitku';
-import { UUID } from 'crypto';
-// Fungsi untuk menghasilkan ID merchant yang unik
+import { GenerateRandomId } from '@/utils/generateRandomId';
 export function GenerateMerchantOrderID(depositId: number, userId: number) {
-  // Menggunakan ID deposit dan ID pengguna untuk keunikan
   return `DEP-${userId}-${depositId}-${Date.now()}`;
 }
 
@@ -41,48 +39,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const noPembayaran  =  GenerateRandomId('DEP')
     // Gunakan transaksi Prisma untuk menjaga konsistensi data
     const result = await prisma.$transaction(async (tx) => {
-      // Buat catatan deposit terlebih dahulu (tanpa noPembayaran)
+      // Buat catatan deposit terlebih dahulu
       const deposit = await tx.deposits.create({
         data: {
           username: user.username,
           metode: method.name,
           status: 'PENDING',
           jumlah: amount,
-          noPembayaran : randomUUID()
+          noPembayaran,
+          createdAt : new Date()
         },
       });
-
-      // Sekarang kita memiliki ID deposit, buat ID merchant
-      const merchantOrderId = GenerateMerchantOrderID(deposit.id, user.id);
-      
-      // Perbarui deposit dengan ID merchant
-      const updatedDeposit = await tx.deposits.update({
-        where: { id: deposit.id },
-        data: { noPembayaran: merchantOrderId },
-      });
-
+    
       // Buat timestamp dan tanda tangan
       const timestamp = Math.floor(Date.now() / 1000);
       const paymentAmount = amount.toString();
       const signature = crypto
         .createHash('md5')
         .update(
-          DUITKU_MERCHANT_CODE + merchantOrderId + paymentAmount + DUITKU_API_KEY
+          DUITKU_MERCHANT_CODE + noPembayaran + paymentAmount + DUITKU_API_KEY
         )
         .digest('hex');
-
-   
-
-      return { deposit: updatedDeposit, merchantOrderId, timestamp, signature };
+    
+      return { deposit, timestamp, signature };
     });
 
     // Sekarang buat pembayaran di Duitku - setelah transaksi DB selesai
     const paymentData = await duitku.Create({
       amount,
       code,
-      merchantOrderId: result.merchantOrderId,
+      merchantOrderId: noPembayaran,
       productDetails: `Deposit for ${user.username}`,
       sign: result.signature,
       time: result.timestamp,
@@ -110,8 +99,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-   
-
+  
     return NextResponse.json({
       paymentUrl: paymentData.paymentUrl,
       status: true,

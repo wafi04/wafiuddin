@@ -101,7 +101,6 @@ export function ManageMember() {
   })
 
 
-  console.log(membersData)
   
   const handlePreviousPage = () => {
     if (page > 1) setPage(page - 1)
@@ -179,7 +178,7 @@ export function ManageMember() {
                   <TableCell>
                     {member.balance}
                   </TableCell>
-                  <TableCell>{member.createdAt}</TableCell>
+                  <TableCell>{formatDate(member.createdAt as string)}</TableCell>
                 </TableRow>
               ))
             )}

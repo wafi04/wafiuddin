@@ -33,6 +33,6 @@ export type PlansProps = {
   providerId: string;
   layanan: string;
   harga: number;
-  hargaFlashSale : number
+  hargaFlashSale : number | null
   isFlashSale : boolean
 };

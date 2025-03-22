@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { X } from "lucide-react";
+import { TRPCError } from "@trpc/server";
 
 export const adminStats = publicProcedure.query(async ({ ctx }) => {
   try {
@@ -182,6 +183,50 @@ export const adminStats = publicProcedure.query(async ({ ctx }) => {
 
 
 export const PembelianAll = router({
+  getId  :  publicProcedure
+  .input(
+    z.object({
+      merchantOrderId: z.string()
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const { merchantOrderId } = input;
+   
+    
+    // Find purchase (pembelian) details with related data
+    const purchase = await ctx.prisma.pembelian.findUnique({
+      where: {
+        orderId: merchantOrderId
+      },
+      include: {
+      pembayaran : true,
+      }
+    });
+    
+    if ( !purchase) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Transaction details not found'
+      });
+    }
+    
+    // You could also fetch additional related data
+    // For example, if you need layanan details:
+    let layananDetails = null;
+    if (purchase.layanan) {
+      layananDetails = await ctx.prisma.layanan.findFirst({
+        where: {
+          layanan: purchase.layanan
+        }
+      });
+    }
+    
+    // Return all the collected data
+    return {
+      purchase,
+      layananDetails,
+      // Add any other data you need to return
+    }}),
     getAll: publicProcedure
       .input(
         z.object({
@@ -224,4 +269,152 @@ export const PembelianAll = router({
           throw new Error("Failed to fetch pembelian data");
         }
       }),
+      trackingInvoice  : publicProcedure.input(z.object({
+        invoice: z.string()
+      })).query(async({ctx,input})  => {
+        try {
+          return await ctx.prisma.pembayaran.findFirst({
+            where : {
+              orderId : input.invoice
+            },
+            select : {
+              orderId : true,
+              noPembeli : true,
+              status : true,
+              updatedAt : true
+            }
+          })
+        } catch (error) {
+          throw new Error("Invoice tidak ditemukan")
+        }
+      }),
+      findMostPembelian  : publicProcedure.query(async({ctx})  => {
+          return await ctx.prisma.pembayaran.findMany({
+            take : 10,
+            select : {
+                orderId : true,
+                noPembeli : true,
+                status : true,
+                updatedAt : true
+            },
+            orderBy : {
+              createdAt : 'desc'
+            }
+          })
+        
+      }),
+      getAllPembelianData: publicProcedure
+      .query(async ({ ctx }) => {
+        const now = new Date();
+        
+        // Start of today
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        // Start of week (Sunday)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        // Start of month
+        const startOfMonth = new Date(now);
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        
+        // Execute all queries in parallel for better performance
+        const [ expensiveToday, expensiveWeek, expensiveMonth] = await Promise.all([
+          // Recent transactions (by date)
+          ctx.prisma.pembayaran.findMany({
+            take: 10,
+            select: {
+              orderId: true,
+              harga: true
+
+            },
+            orderBy: {
+              createdAt: 'desc'
+            }
+          }),
+          
+          // Most expensive (all time)
+          ctx.prisma.pembayaran.findMany({
+            take: 10,
+            select: {
+              orderId: true,
+              harga: true
+            },
+            orderBy: {
+              harga: 'desc'
+            }
+          }),
+          
+          // Most expensive today
+          ctx.prisma.pembayaran.findMany({
+            where: {
+              createdAt: {
+                gte: startOfDay
+              }
+            },
+            take: 10,
+            select: {
+              orderId: true,
+                    harga: true
+            },
+            orderBy: {
+              harga: 'desc'
+            }
+          }),
+          
+          // Most expensive this week
+          ctx.prisma.pembayaran.findMany({
+            where: {
+              createdAt: {
+                gte: startOfWeek
+              }
+            },
+            take: 10,
+            select: {
+              orderId: true,
+              noPembeli: true,
+              status: true,
+              updatedAt: true,
+              harga: true
+            },
+            orderBy: {
+              harga: 'desc'
+            }
+          }),
+          
+          // Most expensive this month
+          ctx.prisma.pembayaran.findMany({
+            where: {
+              createdAt: {
+                gte: startOfMonth
+              }
+            },
+            take: 10,
+            select: {
+              orderId: true,
+              noPembeli: true,
+              status: true,
+              updatedAt: true,
+              harga: true
+            },
+            orderBy: {
+              harga: 'desc'
+            }
+          }),
+        ]);
+        
+        // Return all data in a structured object
+        return {
+          expensive: {
+            today: expensiveToday,
+            week: expensiveWeek,
+            month: expensiveMonth
+          }
+        };
+      })
   });
+
+

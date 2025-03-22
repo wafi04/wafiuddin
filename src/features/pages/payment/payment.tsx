@@ -6,6 +6,7 @@ import { Method, usePlansStore } from '@/hooks/use-select-plan';
 import { FormatPrice } from '@/utils/formatPrice';
 import { DialogPayment } from './dialog-payment';
 import { Voucher } from '@/types/schema/voucher';
+import { PaymentMethod } from '@/types/payment';
 
 export function PaymentsSection({
   amount,
@@ -60,7 +61,7 @@ export function PaymentsSection({
   // Kelompokkan metode pembayaran berdasarkan tipe
   const groupedMethods =
     methods?.data.reduce((acc, method) => {
-      const type = method.type;
+      const type = method.tipe
       if (!acc[type]) {
         acc[type] = [];
       }

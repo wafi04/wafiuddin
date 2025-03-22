@@ -1,5 +1,5 @@
 import { BRAND_SKU_MAPPING } from '@/data/data-sku-digiflazz';
-import { Product } from '@/types/digiflazz/ml';
+import { Product } from './product';
 
 export function filterProductsByGame(
   products: Product[],

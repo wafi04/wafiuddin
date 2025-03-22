@@ -82,9 +82,9 @@ export function DialogPayment({ amount }: { amount: number }) {
           userId: userID,
           serverId: serverID as string,
         });
-
+        console.log(nicknameResult)
         if (nicknameResult.success) {
-          setNicknameData(nicknameResult.name || 'Account found');
+          setNicknameData(nicknameResult.name || 'account ditemukan');
         } else {
           setError(`Pengguna Di temukan`);
         }
@@ -186,13 +186,13 @@ export function DialogPayment({ amount }: { amount: number }) {
                     categories.thumbnail ||
                     '/placeholder.svg?height=48&width=48'
                   }
-                  alt={categories.name}
+                  alt={categories.nama}
                   fill
                   className="object-cover"
                 />
               </div>
               <div>
-                <h3 className="font-medium text-blue-100">{categories.name}</h3>
+                <h3 className="font-medium text-blue-100">{categories.nama}</h3>
                 <p className="text-xs text-blue-300">
                   {selectPlans?.layanan || 'Product'}
                 </p>

@@ -18,6 +18,7 @@ import { trpc } from '@/utils/trpc';
 import { DialogOrderManual } from './dialog-order';
 import type { Category } from '@/types/category';
 import { cn } from '@/lib/utils';
+import { getServerData } from '@/data/data-server-region';
 
 interface HeaderOrderManualProps {
   onChange: (term: string) => void;
@@ -48,9 +49,10 @@ export function HeaderOrderManual({
 
   // Fetch categories data
   const { data: categoriesData } = trpc.main.getCategories.useQuery({
-    fields: ['id', 'name', 'kode', 'placeholder1', 'placeholder2'],
+    fields: ['id', 'nama', 'kode', 'placeholder1', 'placeholder2'],
   });
 
+  
   // Filter options
   const filterOptions = {
     status: ['PAID', 'PENDING', 'FAILED'],
@@ -80,23 +82,23 @@ export function HeaderOrderManual({
   const toggleFilter = (filter: string) => {
     setActiveFilters((prev) =>
       prev.includes(filter)
-        ? prev.filter((f) => f !== filter)
+    ? prev.filter((f) => f !== filter)
         : [...prev, filter]
     );
   };
-
+  
   // Clear all filters
   const clearFilters = () => {
     setActiveFilters([]);
     onStatusChange(undefined);
   };
-
+  
   // Clear search
   const clearSearch = () => {
     setSearchTerm('');
     onChange('');
   };
-
+  
   return (
     <section className="w-full space-y-4 bg-card rounded-lg p-4 shadow-sm border">
       <div className="flex flex-col md:flex-row gap-3">

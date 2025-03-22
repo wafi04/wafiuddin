@@ -28,13 +28,12 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 interface Deposit {
-  amount: number;
-  createdAt: string;
+  jumlah: number;
+  createdAt: string | null
   id: number;
-  method: string;
+  metode: string;
   status: string;
-  updatedAt: string;
-  userId: string;
+  updatedAt: string | null
   username: string;
 }
 
@@ -46,11 +45,15 @@ export function UserTopUp() {
   const [loading, setIsLoading] = useState(false);
   const { push } = useRouter();
 
+
   // Fetch deposits data
   const { data: depositsData, isLoading: depositsLoading } =
     trpc.deposits.getByUsername.useQuery();
-  const deposits = depositsData?.data?.deposit || [];
-  const user = depositsData?.data?.user;
+
+
+    console.log(depositsData?.data)
+  const deposits = depositsData?.data?.history || [];
+  const user =   depositsData?.data?.user 
 
   // Handle amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,6 +91,7 @@ export function UserTopUp() {
       toast.success('Deposit berhasil');
       push(response.data.paymentUrl);
     } catch (error) {
+      console.error(error)
       toast.error('Terjadi kesalahan');
     } finally {
       setIsLoading(false);
@@ -108,6 +112,8 @@ export function UserTopUp() {
       </div>
     );
   }
+
+
 
   return (
     <main className="container mx-auto px-4 py-10 min-h-screen max-w-7xl relative">
@@ -272,6 +278,9 @@ function HistorySection({ deposits }: { deposits: Deposit[] }) {
     );
   }
 
+
+  console.log(deposits)
+
   return (
     <div className="space-y-3">
       {deposits.map((deposit) => (
@@ -282,7 +291,7 @@ function HistorySection({ deposits }: { deposits: Deposit[] }) {
                 <ArrowUpRight className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="font-medium">{deposit.method}</p>
+                <p className="font-medium">{deposit.metode}</p>
                 <p className="text-sm text-muted-foreground">
                   {formatDate(deposit.createdAt as string)}
                 </p>
@@ -294,8 +303,8 @@ function HistorySection({ deposits }: { deposits: Deposit[] }) {
               }`}
             >
               {deposit.status === 'SUCCESS'
-                ? `+${FormatPrice(deposit.amount)}`
-                : `${FormatPrice(deposit.amount)}`}
+                ? `+${FormatPrice(deposit.jumlah)}`
+                : `${FormatPrice(deposit.jumlah)}`}
             </p>
           </CardContent>
         </Card>

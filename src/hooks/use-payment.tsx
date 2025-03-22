@@ -4,7 +4,7 @@ import { JSX } from 'react';
 // hooks/use-duitku-payment.ts
 import { useState } from 'react';
 import axios from 'axios';
-import { RequestPayment } from '@/app/api/payment/initiate/route';
+import { RequestPayment } from '@/app/api/service/initiate/route';
 import { useRouter } from 'next/navigation';
 import { PaymentDetails } from '@/types/payment';
 

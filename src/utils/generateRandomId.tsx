@@ -1,5 +1,5 @@
 export function GenerateRandomId(prefix?: string): string {
-  return `${prefix ? prefix : 'GUEST'}-${Date.now()}-${Math.floor(
-    Math.random() * 100000
+  return `${prefix ? prefix : 'VAZ'}-${Date.now()}${Math.floor(
+    Math.random() * 100
   )}`;
 }

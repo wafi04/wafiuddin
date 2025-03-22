@@ -60,7 +60,7 @@ CREATE TABLE `kategoris` (
     `sub_nama` VARCHAR(191) NOT NULL,
     `brand` TEXT NOT NULL,
     `kode` VARCHAR(191) NULL,
-    `server_id` TINYINT NOT NULL DEFAULT 0,
+    `server_id` INTEGER NOT NULL DEFAULT 0,
     `status` VARCHAR(191) NOT NULL DEFAULT 'active',
     `thumbnail` VARCHAR(191) NOT NULL,
     `tipe` VARCHAR(191) NOT NULL DEFAULT 'game',
@@ -92,12 +92,12 @@ CREATE TABLE `layanans` (
     `profit_reseller` INTEGER NOT NULL,
     `profit_platinum` INTEGER NOT NULL,
     `profit_gold` INTEGER NOT NULL,
-    `is_flash_sale` TINYINT NOT NULL DEFAULT 0,
+    `is_flash_sale` BOOLEAN NOT NULL,
     `judul_flash_sale` TEXT NULL,
     `banner_flash_sale` TEXT NULL,
     `expired_flash_sale` DATE NULL,
     `catatan` LONGTEXT NOT NULL,
-    `status` VARCHAR(191) NOT NULL,
+    `status` BOOLEAN NOT NULL,
     `provider` VARCHAR(191) NOT NULL,
     `product_logo` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NULL,
@@ -145,6 +145,7 @@ CREATE TABLE `pembayarans` (
     `created_at` DATETIME(3) NULL,
     `updated_at` DATETIME(3) NULL,
 
+    UNIQUE INDEX `pembayarans_order_id_key`(`order_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -167,12 +168,13 @@ CREATE TABLE `pembelians` (
     `log` VARCHAR(1000) NULL,
     `sn` VARCHAR(191) NULL,
     `tipe_transaksi` VARCHAR(191) NOT NULL DEFAULT 'game',
-    `is_digi` TINYINT NULL DEFAULT 0,
+    `is_digi` BOOLEAN NOT NULL,
     `ref_id` VARCHAR(191) NULL,
-    `success_report_sended` TINYINT NULL DEFAULT 0,
+    `success_report_sended` BOOLEAN NOT NULL,
     `created_at` DATETIME(3) NULL,
     `updated_at` DATETIME(3) NULL,
 
+    UNIQUE INDEX `pembelians_order_id_key`(`order_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -251,7 +253,7 @@ CREATE TABLE `sub_categories` (
     `category_id` INTEGER NOT NULL,
     `code` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `active` TINYINT NOT NULL,
+    `active` BOOLEAN NOT NULL,
     `created_at` DATETIME(3) NULL,
     `updated_at` DATETIME(3) NULL,
 
@@ -269,7 +271,7 @@ CREATE TABLE `users` (
     `role` VARCHAR(191) NOT NULL,
     `otp` VARCHAR(191) NULL,
     `api_key` VARCHAR(191) NULL,
-    `created_at` DATETIME(3) NULL,
+    `created_at` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NULL,
     `last_payment_at` DATETIME(3) NULL,
 
@@ -280,10 +282,10 @@ CREATE TABLE `users` (
 -- CreateTable
 CREATE TABLE `accounts` (
     `id` VARCHAR(191) NOT NULL,
-    `userId` VARCHAR(191) NOT NULL,
+    `user_id` VARCHAR(191) NOT NULL,
     `type` VARCHAR(191) NOT NULL,
     `provider` VARCHAR(191) NOT NULL,
-    `providerAccountId` VARCHAR(191) NOT NULL,
+    `provider_account_id` VARCHAR(191) NOT NULL,
     `refresh_token` TEXT NULL,
     `access_token` TEXT NULL,
     `expires_at` INTEGER NULL,
@@ -292,18 +294,18 @@ CREATE TABLE `accounts` (
     `id_token` TEXT NULL,
     `session_state` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `accounts_provider_providerAccountId_key`(`provider`, `providerAccountId`),
+    UNIQUE INDEX `accounts_provider_provider_account_id_key`(`provider`, `provider_account_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `sessions` (
     `id` VARCHAR(191) NOT NULL,
-    `sessionToken` VARCHAR(191) NOT NULL,
-    `userId` VARCHAR(191) NOT NULL,
+    `session_token` VARCHAR(191) NOT NULL,
+    `user_id` VARCHAR(191) NOT NULL,
     `expires` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `sessions_sessionToken_key`(`sessionToken`),
+    UNIQUE INDEX `sessions_session_token_key`(`session_token`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -312,7 +314,7 @@ CREATE TABLE `users_auth` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NULL,
     `email` VARCHAR(191) NULL,
-    `emailVerified` DATETIME(3) NULL,
+    `email_verified` DATETIME(3) NULL,
     `image` VARCHAR(191) NULL,
 
     UNIQUE INDEX `users_auth_email_key`(`email`),
@@ -329,14 +331,49 @@ CREATE TABLE `verification_tokens` (
     UNIQUE INDEX `verification_tokens_identifier_token_key`(`identifier`, `token`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- AddForeignKey
-ALTER TABLE `layanans` ADD CONSTRAINT `layanans_kategori_id_fkey` FOREIGN KEY (`kategori_id`) REFERENCES `kategoris`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+-- CreateTable
+CREATE TABLE `vouchers` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `code` VARCHAR(191) NOT NULL,
+    `discountType` VARCHAR(191) NOT NULL,
+    `discountValue` DOUBLE NOT NULL,
+    `maxDiscount` DOUBLE NULL,
+    `minPurchase` DOUBLE NULL,
+    `usageLimit` INTEGER NULL,
+    `usageCount` INTEGER NOT NULL DEFAULT 0,
+    `is_for_all_categories` BOOLEAN NOT NULL DEFAULT false,
+    `is_active` BOOLEAN NOT NULL DEFAULT true,
+    `start_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `expiry_date` DATETIME(3) NOT NULL,
+    `description` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `vouchers_code_key`(`code`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `voucher_categories` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `voucher_id` INTEGER NOT NULL,
+    `category_id` INTEGER NOT NULL,
+
+    UNIQUE INDEX `voucher_categories_voucher_id_category_id_key`(`voucher_id`, `category_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `layanans` ADD CONSTRAINT `layanans_sub_category_id_fkey` FOREIGN KEY (`sub_category_id`) REFERENCES `sub_categories`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `pembelians` ADD CONSTRAINT `pembelians_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `pembayarans`(`order_id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `accounts` ADD CONSTRAINT `accounts_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users_auth`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `accounts` ADD CONSTRAINT `accounts_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users_auth`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `sessions` ADD CONSTRAINT `sessions_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users_auth`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `sessions` ADD CONSTRAINT `sessions_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users_auth`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `voucher_categories` ADD CONSTRAINT `voucher_categories_voucher_id_fkey` FOREIGN KEY (`voucher_id`) REFERENCES `vouchers`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `voucher_categories` ADD CONSTRAINT `voucher_categories_category_id_fkey` FOREIGN KEY (`category_id`) REFERENCES `kategoris`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

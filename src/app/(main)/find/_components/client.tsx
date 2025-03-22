@@ -8,6 +8,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Search, MessageSquare } from "lucide-react"
 import { MostPurchases } from "./mostPembelians"
+import { FormatPrice } from "@/utils/formatPrice"
+
+// Helper functions for masking sensitive data
+function maskOrderId(orderId: string) {
+  if (!orderId) return "-";
+  const firstThree = orderId.substring(0, 3);
+  return `${firstThree}***`;
+}
+
+function maskPhoneNumber(phone: string) {
+  if (!phone || phone === "-") return "-";
+  return "*****";
+}
 
 export function ClientPage() {
   const [term, setTerm] = useState<string>("")
@@ -17,62 +30,27 @@ export function ClientPage() {
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedTerm(term)
-    }, 300)
+    }, 5000)
     
     return () => clearTimeout(timerId)
   }, [term])
 
   // Using trpc to fetch invoice data when debounced term changes
-  // const { data, isLoading, error } = trpc.inv.findById.useQuery(
-  //   { id: debouncedTerm },
-  //   { enabled: debouncedTerm.length > 10 } 
-  // )
+  const { data: invoiceData, isLoading, error } = trpc.pembelian.trackingInvoice.useQuery(
+    { invoice: debouncedTerm },
+    { enabled: debouncedTerm.length > 0 } 
+  )
 
   // Handle the onChange event properly
   const handleSearchChange = (newTerm: string) => {
     setTerm(newTerm)
   }
 
-  const maskInvoiceNumber = (invoiceNumber: string) => {
-    if (!invoiceNumber) return '';
-    
-    // Extract the first 3 characters (INV)
-    const prefix = invoiceNumber.substring(0, 3);
-    
-    // Extract the last 4 characters (85r4)
-    const suffix = invoiceNumber.slice(-4);
-    
-    // Create asterisks to replace everything in between
-    const middleLength = invoiceNumber.length - 3 - 4;
-    const maskedMiddle = '*'.repeat(middleLength);
-    
-    // Return the masked invoice number
-    return prefix + maskedMiddle + suffix;
-  };
-
-  // Function to mask phone number - show only first 3 digits
-  const maskPhoneNumber = (phoneNumber: string) => {
-    if (!phoneNumber) return '—';
-    
-    // Show only first 3 digits followed by asterisks
-    const first3Digits = phoneNumber.slice(0, 3);
-    const maskedPart = '*'.repeat(phoneNumber.length - 3);
-    
-    return first3Digits + maskedPart;
-  }
-
-  // Function to format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  }
 
 
-  const { data: recentTransactions } = trpc.pembelians.findMostPurchase.useQuery()
-
+  // Fetch recent transactions
+  const { data: recentTransactions, isLoading: loadingRecent } = trpc.pembelian.findMostPembelian.useQuery()
+console.log(recentTransactions)
   return (
     <main className="container mx-auto p-4 max-w-4xl">
       <section className="space-y-10 p-6">
@@ -99,49 +77,90 @@ export function ClientPage() {
         )}
         
         {/* Display invoice data */}
-        {data && !isLoading && data.data && (
-          <Table className="p-8">
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Invoice Number</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>No. Handphone</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="p-8">
-              <TableRow>
-                <TableCell className="font-medium">{data.data.id}</TableCell>
-                <TableCell>{maskInvoiceNumber(data.data.invoiceNumber)}</TableCell>
-                <TableCell>{formatCurrency(data.data.totalAmount)}</TableCell>
-                <TableCell>
-                  <Badge variant={data.data.transaction?.paymentStatus === "PAID" ? "default" : "secondary"}>
-                    {data.data.transaction?.paymentStatus || "PENDING"}
-                  </Badge>
-                </TableCell>
-                <TableCell>{maskPhoneNumber(data.data.transaction?.noWa ?? "-")}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+        {invoiceData && !isLoading && (
+          <Card className="border-2 border-primary/10 shadow-md">
+            <CardHeader>
+              <CardTitle>Invoice Details</CardTitle>
+              <CardDescription>
+                Information for invoice #{maskOrderId(invoiceData.orderId || "")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+            <Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead className="min-w-[150px]">Order ID</TableHead>
+      <TableHead className="min-w-[150px]">Phone Number</TableHead>
+      <TableHead className="min-w-[120px]">Status</TableHead>
+      <TableHead className="min-w-[180px]">Last Updated</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell className="font-medium">{maskOrderId(invoiceData.orderId || "")}</TableCell>
+      <TableCell>{maskPhoneNumber(invoiceData.noPembeli.toString() || "-")}</TableCell>
+      <TableCell>
+        <Badge variant={invoiceData.status === "PAID" ? "default" : "secondary"}>
+          {invoiceData.status || "PENDING"}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        {invoiceData.updatedAt ? new Date(invoiceData.updatedAt).toLocaleString() : "-"}
+      </TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+            </CardContent>
+          </Card>
         )}
-        
-       
       </section>
-      <Card className="bg-card">
-        <CardHeader>
-          <CardTitle className="text-card-foreground">Recent Transactions</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Latest 10 transactions across the platform
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {recentTransactions && recentTransactions.data.length > 0 && (
-            <MostPurchases data={recentTransactions.data}/>
-          )}
-        </CardContent>
-       
-      </Card>
+
+      <Card className="mt-8 bg-card shadow-lg">
+  <CardHeader className="border-b">
+    <CardTitle className="text-xl text-card-foreground">Recent Transactions</CardTitle>
+    <CardDescription className="text-muted-foreground">
+      Latest 10 transactions across the platform
+    </CardDescription>
+  </CardHeader>
+  <CardContent className="p-0">
+    {loadingRecent ? (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    ) : recentTransactions && recentTransactions.length > 0 ? (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[200px]">Invoice</TableHead>
+            <TableHead>Phone Number</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Last Updated</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {recentTransactions.map((transaction) => (
+            <TableRow key={transaction.orderId} className="hover:bg-blue-100/50 p-8">
+              <TableCell className="font-medium">{maskOrderId(transaction.orderId)}</TableCell>
+              <TableCell>{maskPhoneNumber(transaction.noPembeli.toString() || "-")}</TableCell>
+              <TableCell>
+                <Badge variant={transaction.status === "PAID" ? "default" : "secondary"}>
+                  {transaction.status || "PENDING"}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <span className="text-xs text-muted-foreground">
+                  {transaction.updatedAt ? new Date(transaction.updatedAt).toLocaleString() : "-"}
+                </span>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    ) : (
+      <p className="p-4 text-center text-muted-foreground">No recent transactions found</p>
+    )}
+  </CardContent>
+</Card>
     </main>
   )
 }

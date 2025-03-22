@@ -1,4 +1,4 @@
-import { Product } from '@/types/digiflazz/ml';
+import { Product } from "./product";
 
 // Possible product types that might be detected in product names
 export type ProductType =

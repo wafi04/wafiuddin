@@ -1,131 +1,105 @@
-"use client"
+'use client';
+import { trpc } from '@/utils/trpc';
+import { FormatPrice } from '@/utils/formatPrice';
 
-import { trpc } from "@/utils/trpc"
-import { Crown, Medal, Trophy } from "lucide-react"
-import { motion } from "framer-motion"
-import { Skeleton } from "@/components/ui/skeleton"
-
-interface TrackingPosition {
-  position: number
-  userId?: string
-  totalAmount?: number
-  user?: {
-    id: string
-    username: string
-  }
+// Helper function untuk masking sensitive data
+function maskOrderId(orderId: string) {
+  if (!orderId) return '-';
+  const firstThree = orderId.substring(0, 3);
+  return `${firstThree}***`;
 }
 
-export const LeaderboardPage = () => {
-  const { data, isLoading } = trpc.main.findLeaderboards.useQuery()
+export function LeaderboardPage() {
+  // Fetch semua data transaksi sekaligus
+  const { data: allData, isLoading: loadingAllData } =
+    trpc.pembelian.getAllPembelianData.useQuery();
+
+  if (loadingAllData) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-cyan-500"></div>
+      </div>
+    );
+  }
+
+  // Data categories
+  const todayTransactions = allData?.expensive?.today || [];
+  const weekTransactions = allData?.expensive?.week || [];
+  const monthTransactions = allData?.expensive?.month || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30 py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <motion.div className="space-y-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          
-            <h1 className="text-4xl font-bold  bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
-              Leaderboard
-            </h1>
-            <h3 className="text-md font-semibold ">
-            Top 10 Pembelian Terbanyak di Vazzuniverse. 
-            </h3>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-sm">
-              Berikut ini adalah daftar 10 pembelian terbanyak yang dilakukan
-              oleh pelanggan kami. Data ini diambil dari sistem kami dan selalu diperbaharui.
-            </p>
-          </motion.div>
+    <main className="container mx-auto p-4 max-w-7xl">
+      <h1 className="text-3xl font-extrabold text-white text-center mb-12 bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+        Leaderboard Transaksi
+      </h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Hari Ini */}
+        <LeaderboardCard
+          title="Hari Ini"
+          transactions={todayTransactions}
+          emptyMessage="Belum ada transaksi hari ini"
+        />
+
+        {/* Minggu Ini */}
+        <LeaderboardCard
+          title="Minggu Ini"
+          transactions={weekTransactions}
+          emptyMessage="Belum ada transaksi minggu ini"
+        />
+
+        {/* Bulan Ini */}
+        <LeaderboardCard
+          title="Bulan Ini"
+          transactions={monthTransactions}
+          emptyMessage="Belum ada transaksi bulan ini"
+        />
+      </div>
+    </main>
+  );
+}
+
+// Komponen reusable untuk kartu leaderboard
+function LeaderboardCard({
+  title,
+  transactions,
+  emptyMessage,
+}: {
+  title: string;
+  transactions: any[];
+  emptyMessage: string;
+}) {
+  return (
+    <div className='relative mb-7'>
+    <div className="bg-gray-900  border border-gray-800 rounded-2xl p-4 shadow-lg hover:shadow-2xl transition-shadow duration-300">
+     <div className='top-0 absolute left-0 w-fit'>
+        TOP {title}
+     </div>
+      {transactions.length > 0 ? (
+        <div className="space-y-4">
+          {transactions.map((transaction, index) => (
+            <div
+              key={transaction.orderId}
+              className="flex justify-between items-center "
+              >
+              <div className="flex items-center space-x-3">
+                <span className="text-sm font-bold text-cyan-400">
+                  #{index + 1}
+                </span>
+                <span className="text-gray-300 text-sm">{maskOrderId(transaction.orderId)}</span>
+              </div>
+              <div className="text-sm font-semibold text-green-400">
+                {FormatPrice(parseInt(transaction.harga))}
+              </div>
+            </div>
+          ))}
         </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-card rounded-xl shadow-lg border p-6">
-                <Skeleton className="h-8 w-32 mb-6" />
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, j) => (
-                    <div key={j} className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="h-8 w-8 rounded-full" />
-                        <Skeleton className="h-4 w-32" />
-                      </div>
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <LeaderboardCard title="Top 10 Hari ini" data={data?.daily as TrackingPosition[]} />
-            <LeaderboardCard title="Top 10 Minggu ini" data={data?.weekly as TrackingPosition[]} />
-            <LeaderboardCard title="Top 10 Bulan ini" data={data?.monthly as TrackingPosition[]} />
-          </div>
-        )}
-
-       
-      </div>
+      ) : (
+        <div className="text-center text-gray-500 py-6">
+          {emptyMessage}
+        </div>
+      )}
     </div>
-  )
-}
-
-export const LeaderboardCard = ({ title, data }: { title: string; data: TrackingPosition[] }) => {
-  const getPositionIcon = (position: number) => {
-    switch (position) {
-      case 1:
-        return <Crown className="h-5 w-5 text-yellow-500" />
-      case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />
-      case 3:
-        return <Medal className="h-5 w-5 text-amber-600" />
-      default:
-        return <span className="text-sm font-bold text-muted-foreground">#{position}</span>
-    }
-  }
-
-
-
-  const item = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0 },
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-card rounded-xl shadow-lg  overflow-hidden"
-    >
-      <div className="p-4 bg-primary/5 border-b">
-        <h2 className="text-xl font-bold">{title}</h2>
-      </div>
-      <motion.div className="p-4 space-y-2"  initial="hidden" animate="show">
-        {data?.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">Belum ada data tersedia</div>
-        ) : (
-          data?.map((item, index) => (
-            <motion.div
-              key={item.userId}
-              className={`flex justify-between items-center  rounded-lg transition-colors `}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full ">
-                  {getPositionIcon(item.position)}
-                </div>
-                <span className="font-medium truncate max-w-[120px]">{item.user?.username || "Unknown User"}</span>
               </div>
-              <div className="font-bold text-primary">
-                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(
-                  item.totalAmount as number,
-                )}
-              </div>
-            </motion.div>
-          ))
-        )}
-      </motion.div>
-    </motion.div>
-  )
+  );
 }
-

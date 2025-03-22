@@ -8,7 +8,7 @@ import { FormatPrice } from '@/utils/formatPrice';
 export type LayananType = {
   id: number;
   layanan: string;
-  status: string;
+  status: boolean
   harga: number;
 };
 
@@ -45,7 +45,7 @@ export function DaftarHargaPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setSearchQuery(draftQuery); // Update setelah delay
-    }, 300); // 300ms jeda
+    }, 3000); // 300ms jeda
 
     return () => clearTimeout(handler); // Bersihkan timeout
   }, [draftQuery]); // Jalankan saat draftQuery berubah
@@ -240,8 +240,7 @@ export function DaftarHargaPage() {
                         className={`px-3 py-1 rounded-full text-sm font-medium ${
                           layanan.status    
                             ? 'bg-green-900/40 text-green-400'
-                            : layanan.status === 'pending'
-                            ? 'bg-yellow-900/40 text-yellow-400'
+                        
                             : 'bg-red-900/40 text-red-400'
                         }`}
                       >
@@ -308,21 +307,19 @@ export function DaftarHargaPage() {
               >
                 <h3 className="font-medium text-lg mb-2">{layanan.layanan}</h3>
                 <p className="text-xl font-bold text-cyan-400 mb-2">
-                  Rp {layanan.harga.toLocaleString()}
+                  {FormatPrice(layanan.price)}
                 </p>
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                    layanan.status === 'active'
+                    layanan.status
                       ? 'bg-green-900/40 text-green-400'
-                      : layanan.status === 'pending'
-                      ? 'bg-yellow-900/40 text-yellow-400'
-                      : 'bg-red-900/40 text-red-400'
+                      : 
+                      'bg-red-900/40 text-red-400'
                   }`}
                 >
-                  {layanan.status === 'active'
+                  {layanan.status 
                     ? 'Aktif'
-                    : layanan.status === 'pending'
-                    ? 'Pending'
+                  
                     : 'Tidak Aktif'}
                 </span>
               </div>

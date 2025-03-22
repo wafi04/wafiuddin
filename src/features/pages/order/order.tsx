@@ -27,7 +27,7 @@ export function OrderPage({ plans, subCategories }: OrderPageProps) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       code: 'top-up',
-      categoriesId: 0,
+      categoryId: 0,
       active: true,
     }),
     []

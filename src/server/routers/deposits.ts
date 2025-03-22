@@ -59,41 +59,60 @@ export const Deposits = router({
         throw new Error(`Internal Server Erorr`);
       }
     }),
-  getByUsername: publicProcedure.query(async ({ ctx }) => {
-    try {
-      const session = await getProfile()
-      if (!session) {
-        return {
-          status: false,
-          message: 'Unauthorized',
-          statusCode: 401,
-        };
-      }
-      const data = await ctx.prisma.deposits.findMany({
-        where: {
-          username: session?.session.username,
-        },
-      });
+    getByUsername: publicProcedure.query(async ({ ctx }) => {
+      try {
+        const session = await getProfile()
+        if (!session) {
+          return {
+            status: false,
+            message: 'Unauthorized',
+            statusCode: 401,
+            data: null
+          };
+        }
+        const user = await  ctx.prisma.users.findUnique({
+          where : {
+            id : session.session.id
+          }
+        })
 
-      return {
-        data,
-        status: true,
-        statusCode: 200,
-      };
-    } catch (error) {
-      if (error instanceof TRPCError) {
-        console.error('error : ', error.message);
+        
+        const data = await ctx.prisma.deposits.findMany({
+          where: {
+            username: session?.session.username,
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        });
+        
+        return {
+          status: true,
+          message: 'Success',
+          statusCode: 200,
+          data: {
+            history: data,
+            user
+          }
+        };
+      } catch (error) {
+        console.error('Error in getByUsername:', error);
+        
+        if (error instanceof TRPCError) {
+          return {
+            status: false,
+            message: error.message,
+            statusCode: 400,
+            data: null
+          };
+        }
+        
         return {
           status: false,
-          message: error.message,
-          statusCode: 400,
+          message: 'Internal Server Error',
+          statusCode: 500,
+          data: null
         };
       }
-      return {
-        status: false,
-        message: 'Internal Server Error',
-        statusCode: 500,
-      };
-    }
-  }),
+    }),
 });

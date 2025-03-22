@@ -180,70 +180,76 @@ model Pembelian {
   @@map("pembelians")
 }
 
-model SettingWeb {
-  id                    Int       @id @default(autoincrement()) @map("id")
-  judulWeb              String    @db.Text @map("judul_web")
-  deskripsiWeb          String    @db.Text @map("deskripsi_web")
-  keyword               String    @db.Text @map("keyword")
-  ogImage               String?   @db.Text @map("og_image")
-  logoHeader            String?   @db.Text @map("logo_header")
-  logoFooter            String?   @db.Text @map("logo_footer")
-  logoFavicon           String?   @db.Text @map("logo_favicon")
-  logoBanner            String?   @db.Text @map("logo_banner")
-  logoCs                String?   @db.Text @map("logo_cs")
-  urlWa                 String    @db.Text @map("url_wa")
-  urlIg                 String    @db.Text @map("url_ig")
-  urlTiktok             String    @db.Text @map("url_tiktok")
-  urlYoutube            String    @db.Text @map("url_youtube")
-  urlFb                 String    @db.Text @map("url_fb")
-  kbrstoreApi           String    @db.Text @map("kbrstore_api")
-  sloganWeb             String    @db.Text @map("slogan_web")
-  snk                   String    @db.Text @map("snk")
-  privacy               String    @db.Text @map("privacy")
-  warna1                String    @db.Text @map("warna1")
-  warna2                String    @db.Text @map("warna2")
-  warna3                String    @db.Text @map("warna3")
-  warna4                String    @db.Text @map("warna4")
-  warna5                String    @db.Text @map("warna5")
-  hargaGold             String    @db.Text @map("harga_gold")
-  hargaPlatinum         String    @db.Text @map("harga_platinum")
-  tripayApi             String?   @db.Text @map("tripay_api")
-  tripayMerchantCode    String?   @db.Text @map("tripay_merchant_code")
-  tripayPrivateKey      String?   @db.Text @map("tripay_private_key")
-  duitkuKey             String?   @db.Text @map("duitku_key")
-  duitkuMerchant        String?   @db.Text @map("duitku_merchant")
-  usernameDigi          String?   @db.Text @map("username_digi")
-  apiKeyDigi            String?   @db.Text @map("api_key_digi")
-  apigamesSecret        String?   @db.Text @map("apigames_secret")
-  apigamesMerchant      String?   @db.Text @map("apigames_merchant")
-  vipApiid              String?   @db.Text @map("vip_apiid")
-  vipApikey             String?   @db.Text @map("vip_apikey")
-  digiSellerUser        String?   @db.Text @map("digi_seller_user")
-  digiSellerKey         String?   @db.Text @map("digi_seller_key")
-  nomorAdmin            String?   @db.Text @map("nomor_admin")
-  waKey                 String?   @db.Text @map("wa_key")
-  waNumber              String?   @db.Text @map("wa_number")
-  ovoAdmin              String?   @db.Text @map("ovo_admin")
-  ovo1Admin             String?   @db.Text @map("ovo1_admin")
-  gopayAdmin            String?   @db.Text @map("gopay_admin")
-  gopay1Admin           String?   @db.Text @map("gopay1_admin")
-  danaAdmin             String?   @db.Text @map("dana_admin")
-  shopeepayAdmin        String?   @db.Text @map("shopeepay_admin")
-  bcaAdmin              String?   @db.Text @map("bca_admin")
-  mandiriAdmin          String?   @db.Text @map("mandiri_admin")
-  logoCeo               String?   @db.Text @map("logo_ceo")
-  sejarah              String    @db.Text @map("sejarah")
-  sejarah1             String    @db.Text @map("sejarah_1")
-  visi                 String    @db.Text @map("visi")
-  misi                 String    @db.Text @map("misi")
-  namaCeo              String    @db.Text @map("nama_ceo")
-  deskripsiCeo         String    @db.Text @map("deskripsi_ceo")
-  namaBagan            String    @db.Text @map("nama_bagan")
-  alamat               String    @db.Text @map("alamat")
-  telp                 String    @db.Text @map("telp")
-  email                String    @db.Text @map("email")
-  createdAt           DateTime? @map("created_at")
-  updatedAt           DateTime? @map("updated_at")
+
+model WebsiteConfig {
+  id                    Int   @id @default(autoincrement())
+  judul_web            String
+  deskripsi_web        String
+  keyword             String
+  og_image            String?
+  logo_header         String?
+  logo_footer         String?
+  logo_favicon        String?
+  logo_banner         String?
+  logo_cs             String?
+  url_wa              String
+  url_ig              String
+  url_tiktok          String
+  url_youtube         String
+  url_fb              String
+  kbrstore_api        String
+  slogan_web          String
+  snk                 String
+  privacy             String
+  warna1              String
+  warna2              String
+  warna3              String
+  warna4              String
+  warna5              String
+  harga_gold          String
+  harga_platinum      String
+  tripay_api          String?
+  tripay_merchant_code String?
+  tripay_private_key  String?
+  duitku_key          String?
+  duitku_merchant     String?
+  username_digi       String?
+  api_key_digi        String?
+  apigames_secret     String?
+  apigames_merchant   String?
+  vip_apiid           String?
+  vip_apikey          String?
+  digi_seller_user    String?
+  digi_seller_key     String?
+  nomor_admin         String?
+  wa_key              String?
+  wa_number           String?
+  ovo_admin           String?
+  ovo1_admin          String?
+  gopay_admin         String?
+  gopay1_admin        String?
+  dana_admin          String?
+  shopeepay_admin     String?
+  bca_admin           String?
+  mandiri_admin       String?
+  logo_ceo            String?
+  sejarah             String
+  sejarah_1           String
+  visi                String
+  misi                String
+  nama_ceo            String
+  deskripsi_ceo       String
+  nama_bagan          String
+  alamat              String
+  telp                String
+  email               String
+  created_at          DateTime? @default(now())
+  updated_at          DateTime? @updatedAt
+  waPending     String?    
+  waPaid    String?
+  waProcess  String?
+  waSuccess  String?
+
 
   @@map("setting_webs")
 }

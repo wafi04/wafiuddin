@@ -1,14 +1,15 @@
+import { TRANSACTION_FLOW } from '@/types/transaction';
+import { stepsTransaction } from '@/utils/product';
 import React from 'react';
-import { FLOWTRANSACTION, stepsTransaction } from '@/types/transaction';
 
-export function FlowProgress({ status }: { status: FLOWTRANSACTION }) {
+export function FlowProgress({ status }: { status: TRANSACTION_FLOW }) {
   // Find current step index
   const currentStepIndex = stepsTransaction.findIndex(
     (step) => step.id === status
   );
 
   return (
-    <div className="w-full py-20">
+    <div className="w-full py-20 md:flex md:flex-col hidden">
       <h2 className="text-lg  mb-6 text-center">Progress Transaksi</h2>
 
       <div className="flex items-center justify-between">

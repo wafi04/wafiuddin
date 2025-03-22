@@ -7,9 +7,9 @@ import { getProfile } from '@/app/(auth)/auth/components/server';
 import { User } from '@/types/schema/user';
 import { TransactionType } from '@/types/transaction';
 interface TopUpRequest {
-  whatsapp: string;
   userId: string;
   serverId?: string;
+  reference : string
   productCode: string;
 }
 
@@ -71,11 +71,11 @@ export class Digiflazz {
 
   async TopUp(topUpData: TopUpRequest) {
     try {
-      const refId = `TRX-${Date.now()}`;
+      const trx_id = `TRX-${Date.now()}`;
 
       const signature = crypto
         .createHash('md5')
-        .update(this.username + this.apiKey + refId)
+        .update(this.username + this.apiKey + topUpData.reference)
         .digest('hex');
 
       const userId = topUpData.userId?.trim();
@@ -91,28 +91,23 @@ export class Digiflazz {
       // Format customer_no based on what Digiflazz expects
       let customerNo;
 
-      if (topUpData.productCode.includes('ML') && userId && serverId) {
-        customerNo = `${parseInt(userId)}${parseInt(serverId)}`;
-      }
-      // For Free Fire (usually just userId)
-      else if (topUpData.productCode.includes('FF') && userId) {
-        customerNo = userId;
-      }
+    
       // Default format with period separator
-      else if (userId && serverId) {
+      if (userId && serverId) {
         customerNo = `${userId}${serverId}`;
-      } else if (userId) {
+      } else  {
         customerNo = userId;
-      } else {
-        customerNo = topUpData.whatsapp;
-      }
+      } 
 
+      console.log('DATANYA : '  , topUpData.productCode)
+      console.log('DATANYA : '  , customerNo)
       // Prepare request data
       const data = {
         username: this.username,
         buyer_sku_code: topUpData.productCode,
-        customer_no: customerNo,
-        ref_id: refId,
+        customer_no: '817118111781981810101901',
+        ref_id: topUpData.reference,
+        trx_id,
         sign: signature,
       };
 

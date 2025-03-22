@@ -6,6 +6,7 @@ export interface TransactionType {
     buyer_sku_code: string;
     message: string;
     status: string;
+    trx_id  : string
     rc: string;
     sn: string;
   };

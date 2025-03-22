@@ -155,3 +155,5 @@ export type Voucher = z.infer<typeof voucherSchema>;
 export type CreateVoucherInput = z.infer<typeof createVoucherSchema>;
 export type UpdateVoucherInput = z.infer<typeof updateVoucherSchema>;
 export type VoucherFilter = z.infer<typeof voucherFilterSchema>;
+
+

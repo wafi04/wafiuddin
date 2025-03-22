@@ -1,379 +1,213 @@
-import { TransactionDetailsType } from '@/types/transaction';
-import { useState } from 'react';
-import {
-  CalendarIcon,
-  Download,
-  Clock,
-  AlertCircle,
-  CheckCircle2,
-  Copy,
-  ArrowRight,
-  RefreshCw,
-} from 'lucide-react';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { formatDate, FormatPrice } from '@/utils/formatPrice';
-import { calculateTimeRemaining } from '@/utils/calculate';
-import { getStatusColor, getStatusIcon } from '@/components/ui/payment-status';
-import { Category } from '@/types/category';
+import React from "react";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Clock, Copy, CheckCircle, ArrowLeft, Printer } from "lucide-react";
+import { formatDate } from "@/utils/formatPrice";
+import { getStatusConfig, useLogicTransaksi } from "./utils";
+import { InvoicePrint } from "@/data/export/print-invoices";
+import { cn } from "@/lib/utils";
 
-export function TransactionDetails({
-  data,
-  category,
-}: {
-  data: TransactionDetailsType;
-  category: Category;
-}) {
-  const [tabAktif, setTabAktif] = useState('details');
-  const [disalin, setDisalin] = useState(false);
+interface TransactionDetailsProps {
+  data: Transaksi;
+  onBack?: () => void;
+  onViewDetails?: () => void;
+}
 
-  const salinKePapanKlip = (teks: string) => {
-    navigator.clipboard.writeText(teks);
-    setDisalin(true);
-    setTimeout(() => setDisalin(false), 2000);
-  };
+export function TransactionDetails({ data, onBack}: TransactionDetailsProps) {
+  const { copy, url, copied, timeLeft, paymentType } = useLogicTransaksi({ data });
+  const statusConfig = getStatusConfig(data.status);
+  const paymentStatusConfig = data.pembayaran ? getStatusConfig(data.pembayaran.status) : statusConfig;
+  const isPending = data.pembayaran?.status === "PENDING" || data.pembayaran?.status === "PROCESS";
 
-  const waktuTersisa = calculateTimeRemaining({ createdAt: data.createdAt });
+  // Parse timeLeft into hours, minutes, seconds for better display
+  const timeLeftParts = timeLeft ? timeLeft.split(":").map((part) => part.trim()) : ["00", "00", "00"];
+  const [hours, minutes, seconds] = timeLeftParts.length === 3 ? timeLeftParts : ["00", ...timeLeftParts];
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-md">
-      <CardHeader className="pb-3 border-b">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div>
-            <CardTitle className="text-2xl font-bold">
-              Detail Transaksi
-            </CardTitle>
-            <CardDescription className="mt-1">
-              ID Pesanan:{' '}
-              <span className="font-medium">{data.merchantOrderId}</span>
-            </CardDescription>
-          </div>
-          <Badge
-            className={`${getStatusColor(
-              data.paymentStatus
-            )} px-3 py-1.5 text-sm flex items-center gap-1.5 border`}
-          >
-            {getStatusIcon(data.paymentStatus)}
-            {data.paymentStatus}
-          </Badge>
-        </div>
-      </CardHeader>
-      {data.paymentStatus === 'PENDING' && (
-        <div className="px-6 py-4 bg-amber-50 border-b border-amber-100">
-          <Alert variant="default" className="bg-amber-50 border-amber-200">
-            <Clock className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="text-amber-800 font-medium">
-              Pembayaran Tertunda
-            </AlertTitle>
-            <AlertDescription className="text-amber-700">
-              Silakan selesaikan pembayaran Anda dalam {waktuTersisa.hours}j{' '}
-              {waktuTersisa.minutes}m untuk menghindari pembatalan.
-            </AlertDescription>
-          </Alert>
-          <div className="mt-3">
-            <div className="flex justify-between text-xs text-amber-700 mb-1.5">
-              <span>Waktu tersisa</span>
-              <span>
-                {waktuTersisa.hours}j {waktuTersisa.minutes}m tersisa
-              </span>
-            </div>
-            <div className="relative">
-              <Progress
-                value={waktuTersisa.percentage}
-                className="h-2 bg-amber-200"
-              />
-              <style jsx>{`
-                :global(.progress-indicator) {
-                  background-color: #f59e0b; /* amber-500 */
-                }
-              `}</style>
-            </div>
-          </div>
-        </div>
-      )}
-      <CardContent className="p-0">
-        <Tabs
-          defaultValue="details"
-          value={tabAktif}
-          onValueChange={setTabAktif}
-          className="w-full"
-        >
-          <TabsList className="grid grid-cols-2 rounded-none border-b">
-            <TabsTrigger
-              value="details"
-              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+    <div className="w-full max-w-6xl mx-auto space-y-8">
+      {/* Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Kartu Informasi Pembelian */}
+        <Card className="shadow-md border-0 overflow-hidden rounded-lg">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Informasi Pembelian</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Detail Layanan */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
             >
-              Detail Transaksi
-            </TabsTrigger>
-            <TabsTrigger
-              value="invoice"
-              className="rounded-none data-[state=active]:border-b-2 data-[state=active]:border-primary"
+              <h3 className="text-md font-medium text-muted-foreground mb-3">Detail Layanan</h3>
+              <div className="space-y-3">
+                <DetailItem label="Pembelian " value={data.layanan} />
+                <DetailItem label="Tipe Transaksi" value={data.tipeTransaksi} valueClassName="text-md"/>
+                <DetailItem
+                  label="Harga"
+                  value={`Rp ${data.harga.toLocaleString("id-ID")}`}
+                  valueClassName="font-semibold text-primary"
+                />
+              </div>
+            </motion.div>
+
+            {/* Informasi Pengguna */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Informasi Faktur
-            </TabsTrigger>
-          </TabsList>
-          <div className="p-6">
-            <TabsContent value="details" className="mt-0 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  {/* Informasi Game */}
-                  <div className="bg-muted/30 rounded-lg p-5 border">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-background border">
-                        {category && (
-                          <Image
-                            src={category.thumbnail}
-                            alt={category.name}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {category.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {category.subName}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-y-2 text-sm">
-                      <span className="font-medium">ID Pengguna:</span>
-                      <span>{data.pembelian[0].accountID}</span>
-                      {data.pembelian[0].zone && (
-                        <>
-                          <span className="font-medium">ID Server:</span>
-                          <span>{data.pembelian[0].zone}</span>
-                        </>
-                      )}
-                      <span className="font-medium">Layanan:</span>
-                      <span>Top up</span>
-                    </div>
-                  </div>
-                  {/* Informasi Pembayaran */}
-                  <div className="bg-muted/30 rounded-lg p-5 border">
-                    <h3 className="font-medium mb-4">Informasi Pembayaran</h3>
-                    <div className="grid grid-cols-2 gap-y-3 text-sm">
-                      <span className="font-medium">Jumlah:</span>
-                      <span className="font-semibold">
-                        {FormatPrice(data.finalAmount)}
-                      </span>
-                      <span className="font-medium">Jumlah Awal:</span>
-                      <span>{FormatPrice(data.originalAmount)}</span>
-                      <span className="font-medium">Diskon:</span>
-                      <span>{FormatPrice(data.discountAmount)}</span>
-                      <span className="font-medium">Metode Pembayaran:</span>
-                      <span>{data.paymentCode}</span>
-                      <span className="font-medium">Referensi:</span>
-                      <div className="flex items-center gap-1">
-                        <span className="truncate max-w-[120px]">
-                          {data.paymentReference || 'N/A'}
-                        </span>
-                        {data.paymentReference && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() =>
-                                    salinKePapanKlip(data.paymentReference)
-                                  }
-                                >
-                                  {disalin ? (
-                                    <CheckCircle2 className="h-3 w-3" />
-                                  ) : (
-                                    <Copy className="h-3 w-3" />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>{disalin ? 'Disalin!' : 'Salin referensi'}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-6">
-                  {/* Informasi Status */}
-                  <div className="bg-muted/30 rounded-lg p-5 border">
-                    <h3 className="font-medium mb-4">Informasi Status</h3>
-                    <div className="grid grid-cols-2 gap-y-3 text-sm">
-                      <span className="font-medium">Status:</span>
-                      <Badge className={getStatusColor(data.paymentStatus)}>
-                        {data.paymentStatus}
-                      </Badge>
-                      <span className="font-medium">Dibuat Pada:</span>
-                      <span>{formatDate(data.createdAt)}</span>
-                      <span className="font-medium">Diperbarui Pada:</span>
-                      <span>{formatDate(data.updatedAt)}</span>
-                      <span className="font-medium">Selesai Pada:</span>
-                      <span>
-                        {data.completedAt
-                          ? formatDate(data.completedAt)
-                          : 'Tertunda'}
-                      </span>
-                      <span className="font-medium">WhatsApp:</span>
-                      <span>{data.noWa}</span>
-                    </div>
-                  </div>
-                  {/* QR Code (jika tersedia) */}
-                  {data.qrString && (
-                    <div className="bg-muted/30 rounded-lg p-5 border">
-                      <h3 className="font-medium mb-4">Pembayaran QR</h3>
-                      <div className="flex flex-col items-center">
-                        <div className="bg-white p-4 rounded-lg mb-3">
-                          <Image
-                            width={150}
-                            height={150}
-                            src={`data:image/png;base64,${data.qrString}`}
-                            alt="Kode QR Pembayaran"
-                            className="w-[150px] h-[150px]"
-                          />
-                        </div>
-                        <p className="text-sm text-center text-muted-foreground">
-                          Pindai kode QR ini dengan aplikasi pembayaran Anda untuk menyelesaikan transaksi.
-                        </p>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3">Detail Pengguna</h3>
+              <div className="space-y-3">
+                <DetailItem label="Username" value={data.username || "-"} valueClassName="text-lg" />
+                <DetailItem label="Nickname" value={data.nickname || "-"} />
+                {data.userId && <DetailItem label="User Id" value={data.userId} />}
+                {data.zone && <DetailItem label="Zone" value={data.zone} />}
+              </div>
+            </motion.div>
+          </CardContent>
+        </Card>
+
+        {/* Kartu Informasi Pembayaran */}
+        {data.pembayaran && (
+          <Card className="shadow-md border-0 overflow-hidden rounded-lg">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Informasi Pembayaran</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Timer untuk pembayaran pending */}
+              {isPending && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                <div className={`p-4 rounded-lg bg-[hsl(217,100%,16%)] border border-[hsl(217,100%,20%)]`}>
+  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+    {/* Bagian Kiri: Label "Batas Waktu Pembayaran" */}
+    <div className="flex items-center">
+      <Clock className="h-5 w-5 mr-2 text-white" />
+      <span className="font-medium text-white">Batas Waktu Pembayaran:</span>
+    </div>
+
+    {/* Bagian Kanan: Timer */}
+    <div className="flex items-center gap-2">
+      {/* Jam */}
+      <div className="flex flex-col items-center">
+        <div className="">
+          <span className="text-2xl font-bold text-white">{hours}</span>
+        </div>
+        <span className="text-xs mt-1 text-gray-300">Jam</span>
+      </div>
+
+      {/* Separator ":" */}
+      <span className="text-xl font-bold text-white mt-[-0.5rem]">:</span>
+
+      {/* Menit */}
+      <div className="flex flex-col items-center">
+        <div className="">
+          <span className="text-2xl font-bold text-white">{minutes}</span>
+        </div>
+        <span className="text-xs mt-1 text-gray-300">Menit</span>
+      </div>
+
+      {/* Separator ":" */}
+      <span className="text-xl font-bold text-white mt-[-0.5rem]">:</span>
+
+      {/* Detik */}
+      <div className="flex flex-col items-center">
+        <div className="">
+          <span className="text-2xl font-bold text-white">{seconds}</span>
+        </div>
+        <span className="text-xs mt-1 text-gray-300">Detik</span>
+      </div>
+    </div>
+  </div>
+</div>
+                </motion.div>
+              )}
+
+              {/* Detail Pembayaran */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Detail Pembayaran</h3>
+                <div className="space-y-3">
+                  <DetailItem label="Metode" value={data.pembayaran.metode} />
+                  {/* Virtual Account */}
+                  {paymentType === "VA" && data.pembayaran.noPembayaran && (
+                    <div className="mt-2 mb-3">
+                      <div className="text-sm text-muted-foreground mb-1">No. Virtual Account:</div>
+                      <div className="flex items-center justify-between bg-blue-600 p-2 rounded-md">
+                        <span className="font-mono text-base font-medium">{data.pembayaran.noPembayaran}</span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => copy(data.pembayaran?.noPembayaran || "", "vaNumber")}
+                                className="h-8 ml-2"
+                              >
+                                {copied.id === "vaNumber" && copied.value ? (
+                                  <span className="flex items-center gap-1">
+                                    <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                                    Copied
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1">
+                                    <Copy className="h-3.5 w-3.5" />
+                                    Copy
+                                  </span>
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{copied.id === "vaNumber" && copied.value ? "Copied!" : "Copy to clipboard"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   )}
-                  {/* Aksi Pembayaran (untuk status tertunda) */}
-                  {data.paymentStatus === 'PENDING' && (
-                    <div className="bg-primary-foreground rounded-lg p-5 border border-primary/20">
-                      <h3 className="font-medium mb-3">
-                        Selesaikan Pembayaran Anda
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Klik tombol di bawah untuk melanjutkan ke halaman pembayaran dan menyelesaikan transaksi Anda.
-                      </p>
+                  {/* Payment URL */}
+                  {paymentType === "URL" && data.pembayaran.reference && (
+                    <div className="mt-2 mb-3">
+                      <div className="text-sm text-muted-foreground mb-1">Link Pembayaran:</div>
                       <Button
-                        className="w-full"
-                        onClick={() => window.open(data.paymentUrl, '_blank')}
+                        variant="outline"
+                        onClick={url}
+                        className="w-full justify-center text-sm py-2 h-10 gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
                       >
-                        Bayar Sekarang <ArrowRight className="ml-2 h-4 w-4" />
+                        Buka Link Pembayaran
                       </Button>
                     </div>
                   )}
+                  <DetailItem label="Waktu" value={formatDate(data.pembayaran.createdAt as string)} />
+                  <DetailItem label="No. Pembeli" value={`${data.pembayaran.noPembeli}`} valueClassName="" />
                 </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="invoice" className="mt-0">
-              {data.invoice && data.invoice.length > 0 ? (
-                <div className="space-y-6">
-                  {data.invoice.map((inv, index) => (
-                    <Card key={index} className="border shadow-sm">
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <CardTitle className="text-lg">
-                              Faktur #{inv.invoiceNumber}
-                            </CardTitle>
-                            <CardDescription className="flex items-center gap-1 mt-1">
-                              <CalendarIcon className="h-3 w-3" />
-                              Jatuh Tempo: {new Date(inv.dueDate).toLocaleDateString()}
-                            </CardDescription>
-                          </div>
-                          <Badge className={getStatusColor(inv.status)}>
-                            {inv.status}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-y-2">
-                            <span className="text-sm font-medium">
-                              Subtotal:
-                            </span>
-                            <span className="text-sm">
-                              {FormatPrice(inv.subtotal)}
-                            </span>
-                            <span className="text-sm font-medium">
-                              Diskon:
-                            </span>
-                            <span className="text-sm">
-                              {FormatPrice(inv.discountAmount)}
-                            </span>
-                            <span className="text-sm font-medium">Pajak:</span>
-                            <span className="text-sm">
-                              {FormatPrice(inv.taxAmount)}
-                            </span>
-                            <Separator className="col-span-2 my-1" />
-                            <span className="text-sm font-medium">
-                              Total:
-                            </span>
-                            <span className="text-sm font-bold">
-                              {FormatPrice(inv.totalAmount)}
-                            </span>
-                          </div>
-                          {inv.notes && (
-                            <div className="mt-4">
-                              <h4 className="text-sm font-medium mb-1">
-                                Catatan:
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {inv.notes}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex justify-between pt-2">
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Unduh
-                        </Button>
-                        <div className="text-xs text-muted-foreground">
-                          Dibuat:{' '}
-                          {new Date(inv.createdAt).toLocaleDateString()}
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 px-4">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <AlertCircle className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">
-                    Tidak Ada Faktur Tersedia
-                  </h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    {data.paymentStatus === 'PENDING'
-                      ? 'Faktur akan dibuat setelah pembayaran selesai.'
-                      : 'Tidak ada informasi faktur untuk transaksi ini.'}
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-          </div>
-        </Tabs>
-      </CardContent>
-    </Card>
+              </motion.div>
+            </CardContent>
+            <CardFooter className="flex justify-between border-t p-6  dark:bg-slate-900">
+                <InvoicePrint data={data}/>
+          </CardFooter>
+          </Card>
+        )}
+        
+      </div>
+    </div>
+  );
+}
+
+// Komponen DetailItem
+export function DetailItem({ label, value, valueClassName = "" }  : {label : string,value : string,valueClassName? : string}) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="text-md text-muted-foreground">{label}</span>
+      <span className={cn("text-md", valueClassName)}>{value}</span>    </div>
   );
 }
